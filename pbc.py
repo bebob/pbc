@@ -3,10 +3,6 @@ Contains tools to transform a set of numerical data into
 annotated Process Behavior Charts as defined by Donald J. Wheeler
 in his book Understanding Variation: The Key to Managing Chaos
 
-Accepts: get_charts() accepts a pandas Series or a List of numerical data
-Returns: matplotlib Figure
-
-
 Author: Bob Hannon < bob@bobhannon.com>
 
 License: MIT
@@ -44,8 +40,15 @@ def get_charts(s):
     :param s: Series or List of numbers :
     :return: figure containing X-mR charts and Histogram
     """
-    val_name = s.name if s.name is not None else 'X'
+    if type(s) is not 'pandas.core.series.Series':
+        try:
+            s = pd.Series(s)
+        except:
+            raise TypeError('Must be numerical data')
+
+    s.name = s.name if s.name is not None else 'X'
     idx = s.index if s.index is not None else range(0, len(s))
+
     df = get_limits(s)
     plt.style.use('ggplot')
     figure = plt.figure(0, figsize=(15, 8))
@@ -54,7 +57,7 @@ def get_charts(s):
     ax3 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)   # hist plot
 
     # plot X chart
-    ax1.plot(idx, df[val_name], label=val_name, marker='o', ms=3)     # X vals
+    ax1.plot(idx, df[s.name], label=s.name, marker='o', ms=3)     # X vals
     ax1.plot(idx, df['XBar'], color="#245f9c", label='_nolegend_', linewidth=1.5)       # XBar
     ax1.plot(idx, df['UNPL'], '--', color="#245f9c", linewidth=1, label='_nolegend_')
     if df['LNPL'][0] != 0:
@@ -63,7 +66,7 @@ def get_charts(s):
     ax1.annotate('  Avg:\n  ' + str(df['XBar'][0].round(2)), xy=(idx[-1]+4,df['XBar'][0]))
     ax1.annotate('  Upper Limit:\n  ' + str(df['UNPL'][0].round(2)), xy=(idx[-1]+4,df['UNPL'][0]))
 
-    ax1.set_title(val_name)
+    ax1.set_title(s.name)
     ax1.legend()
 
     # plot mR chart
@@ -72,13 +75,13 @@ def get_charts(s):
     ax2.plot(idx, df['URL'], '--', color="#245f9c", linewidth=1, label='_nolegend_')
     ax2.annotate('  Avg Range:\n  ' + str(df['mRBar'][0].round(2)), xy=(idx[-1] + 4, df['mRBar'][0]))
     ax2.annotate('  Upper Range Limit:\n  ' + str(df['URL'][0].round(2)), xy=(idx[-1] + 4, df['URL'][0]))
-    ax2.set_title(val_name + ' - Moving Range (mR)')
+    ax2.set_title(s.name + ' - Moving Range (mR)')
     ax2.legend()
 
 
     # plot historgram
-    ax3.hist(df[val_name], rwidth=0.95, color='#245f9c')
-    ax3.set_title(val_name + ' Distribution')
+    ax3.hist(df[s.name], rwidth=0.95, color='#245f9c')
+    ax3.set_title(s.name + ' Distribution')
 
     # adjust spacing and axis label rotation
     plt.subplots_adjust(wspace=0.75, hspace=0.5)
